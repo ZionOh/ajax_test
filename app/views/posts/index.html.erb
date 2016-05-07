@@ -1,0 +1,91 @@
+    <style>
+      #map {
+        width: 500px;
+        height: 500px;
+      }
+     </style> 
+
+<div class="container">
+<h1>Ji in the house</h1>    
+    <div id="map"></div>
+      <div id="show" class="modal">
+        <div class="modal-content">
+          <h4>Modal Header</h4>
+          <p>A bunch of text</p>
+        </div>
+        <div class="modal-footer">
+          <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Agree</a>
+        </div>
+      </div>
+      <div id="write" class="modal">
+        <div class="modal-content">
+          <input type="hidden" name="lat" value="" id="lat">
+          <input type="hidden" name="lng" value="" id="lng">
+          <h4>Title</h4>
+          <input type="text" name="title" id="title-input">
+          <br>
+          <p>Description</p>
+          <input type="text" name="desc" id="desc-input">
+          <br>
+          <input type="submit" id="submit-btn">
+        </div>
+      </div>
+    
+    
+    <script>
+      function initMap() {
+        var mapDiv = document.getElementById('map');
+        var map = new google.maps.Map(mapDiv, {
+          center: {lat: 43.7030875, lng: -72.2878209},
+          zoom: 14
+        });
+<% @posts.each do |post| %>
+        var marker = new google.maps.Marker({
+        position: {lat:<%=post.lat%>, lng:<%=post.lng%>},
+        map: map,
+        post_id: <%=post.id%>
+        });
+        marker.addListener('click', function(){
+         $.get('/posts/'+ this.post_id, function(data){
+            $('#show .modal-content h4').html(data.title);
+            $('#show .modal-content p').html(data.desc);
+            });
+         $('#show').openModal(); 
+        });
+<% end %>
+        google.maps.event.addListener(map, 'click', function(event) {
+          $('#lat').val(event.latLng.lat());
+          $('#lng').val(event.latLng.lng());
+          $('#write').openModal();
+//    addMarker(event.latLng, map);
+        });
+        $('#submit-btn').click(function(){
+          $.post('/posts',
+                {title: $('#title-input').val(),
+                desc: $('#desc-input').val(),
+                lat: $('#lat').val(),
+                lng: $('#lng').val()
+                },
+    function(data) {   
+      var marker = new google.maps.Marker({
+        position: {lat: data.lat, lng: data.lng},
+        map: map,
+        post_id: this.post_id
+      });
+      marker.addListener('click', function(){
+        $.get('/posts/'+ this.post_id, function(data){
+        $('#show .modal-content h4').html(data.title);
+        $('#show .modal-content p').html(data.desc);
+      });
+        $('#show').openModal(); 
+        });
+        $('#title-input').val('');
+        $('#desc-input').val('');
+        $('#write').closeModal();
+      });
+    });          
+}
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&key=AIzaSyAqCLX9BojXx6vPPiUgC66KTlrQLqzyVrc"
+        async defer></script>
+</div>

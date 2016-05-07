@@ -1,0 +1,84 @@
+<style>
+    #map {
+        width: 100%;
+        height: 500px;
+    }
+</style>
+<div class="container">
+    <h3>Google Map Note</h3>
+    <div id="map"></div>
+</div>
+  <!-- Modal Structure -->
+  <div id="show" class="modal">
+    <div class="modal-content">
+      <h4>Modal Header</h4>
+      <p>A bunch of text</p>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
+  <!-- Modal Structure -->
+  <div id="write" class="modal bottom-sheet">
+    <div class="modal-content">
+      <input type="hidden" name="lat" value="" id="lat">
+      <input type="hidden" name="lng" value="" id="lng">
+      <p>제목</p>
+      <input type="text" name="title" id="title-input">
+      <p>내용</p>
+      <input type="text" name="desc" id="desc-input">
+      <br>
+      <input type="submit" id="submit-btn">
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">취소</a>
+    </div>
+  </div>
+          
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap&key=AIzaSyDMllxJwGRD0cxQpwxrQxzp0KfyA7-KYNU" async defer></script>
+<script>
+  function initMap() {
+    var mapDiv = document.getElementById('map');
+    var map = new google.maps.Map(mapDiv, {
+        center: {lat: 37, lng: 127},
+        zoom: 8
+    });
+    <% @posts.each do |post| %>
+      addMarker(map, <%=post.id%>, <%=post.lat%>, <%=post.lng%>);
+    <% end %>
+    google.maps.event.addListener(map, 'click', function(e) {
+      $('#lat').val(e.latLng.lat());
+      $('#lng').val(e.latLng.lng());
+      $('#write').openModal();
+    });
+    $('#submit-btn').click(function() {
+        $.post('/posts',
+          {title: $('#title-input').val(),
+              desc: $('#desc-input').val(),
+              lat: $('#lat').val(),
+              lng: $('#lng').val()
+          },
+          function(data) {
+            addMarker(map, data.post_id, data.lat, data.lng);
+            $('#title-input').val('');
+            $('#desc-input').val('');
+            $('#write').closeModal();
+          }
+        );
+    });
+  }
+  function addMarker(map, post_id, lat, lng) {
+    var marker = new google.maps.Marker({
+        position: {lat: lat, lng: lng},
+        map: map,
+        post_id: post_id
+    });
+    marker.addListener('click', function() {
+        $.get('/posts/' + this.post_id, function(data) {
+            $('#show .modal-content h4').html(data.title);
+            $('#show .modal-content p').html(data.desc);
+        });
+        $('#show').openModal();
+    });
+  }
+</script>
